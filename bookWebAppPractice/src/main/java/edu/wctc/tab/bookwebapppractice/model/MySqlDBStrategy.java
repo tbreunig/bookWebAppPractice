@@ -4,6 +4,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -28,10 +29,19 @@ public class MySqlDBStrategy implements DatabaseStrategy {
     }
 
     @Override
-    public void createNewRecord(String tableName, Object primeKeyName, Object primeKeyValue) throws SQLException {
-        String sql = "INSERT INTO literature.author .....";
-        Statement stmt = null;
+    public void createNewRecord(String tableName, String columnName, Object columnValue) throws SQLException {
 
+        String sql = null;
+        PreparedStatement stmt = null;
+
+        if (columnValue == null) {
+            sql = "INSERT INTO " + tableName + " (" + columnName + ", " + columnName + ") " + "VALUES" + " (?,?)";
+            stmt = conn.prepareStatement(sql);
+            stmt.setObject(1, columnValue);
+            stmt.setObject(2, columnValue);
+           
+        }
+         stmt.executeQuery(sql);
     }
 
     @Override
@@ -55,15 +65,22 @@ public class MySqlDBStrategy implements DatabaseStrategy {
             }
             recordList.add(record);
         }
-
         return recordList;
     }
 
     @Override
-    public void updateSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue) throws SQLException {
-        String sql = "UPDATE literature.author SET.....";
+    public void updateSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue, String columnName, Object columnValue) throws SQLException {
+        String sql;
         Statement stmt = null;
 
+        if (primeKeyValue instanceof String) {
+            sql = "UPDATE " + tableName + " SET " + primeKeyName + " = '" + primeKeyValue + "'" + " WHERE " + columnName + " = '" + columnValue + "'";
+            stmt = conn.prepareStatement(sql);
+        } else {
+            sql = "UPDATE " + tableName + " SET " + primeKeyName + " = " + primeKeyValue + " WHERE " + columnName + " = " + columnValue;
+            stmt = conn.prepareStatement(sql);
+        }
+        stmt.executeUpdate(sql);
     }
 
     @Override
@@ -74,12 +91,10 @@ public class MySqlDBStrategy implements DatabaseStrategy {
         if (primeKeyValue instanceof String) {
             sql = "DELETE FROM " + tableName + " WHERE " + primeKeyName + " = '" + primeKeyValue + "'";
             stmt = conn.prepareStatement(sql);
-
         } else {
             sql = "DELETE FROM " + tableName + " WHERE " + primeKeyName + " = " + primeKeyValue;
             stmt = conn.prepareStatement(sql);
         }
-
         stmt.executeUpdate(sql);
     }
 
@@ -96,9 +111,9 @@ public class MySqlDBStrategy implements DatabaseStrategy {
 //            System.out.println(record);
 //        }
 
-        db.deleteSingleRecord("author", "author_id", 3);
+        db.createNewRecord("author",);
 
-        System.out.println(db.findAllRecords("author"));
+        System.out.println();
     }
 
 }

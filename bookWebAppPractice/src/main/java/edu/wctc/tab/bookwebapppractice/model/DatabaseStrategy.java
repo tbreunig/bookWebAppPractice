@@ -12,11 +12,11 @@ public interface DatabaseStrategy {
 
     public abstract void openConnection(String driverClass, String url, String userName, String password) throws Exception;
     
-    public abstract void createNewRecord(String tableName, Object primeKeyName, Object primeKeyValue) throws SQLException;
+    public abstract void createNewRecord(String tableName, String columnName, Object columnValue) throws SQLException;
     
     public abstract List<Map<String, Object>> findAllRecords(String tableName) throws SQLException;
     
-    public abstract void updateSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue) throws SQLException;
+    public abstract void updateSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue, String columnName, Object columnValue) throws SQLException;
 
     public abstract void deleteSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue) throws SQLException;
 
