@@ -1,22 +1,16 @@
 package edu.wctc.tab.bookwebapppractice.controller;
 
-import edu.wctc.tab.bookwebapppractice.model.Author;
-import edu.wctc.tab.bookwebapppractice.model.AuthorDAO;
-import edu.wctc.tab.bookwebapppractice.model.AuthorDAOstrategy;
-import edu.wctc.tab.bookwebapppractice.model.DatabaseStrategy;
-import edu.wctc.tab.bookwebapppractice.model.LiteratureService;
-import edu.wctc.tab.bookwebapppractice.model.MySqlDBStrategy;
+import edu.wctc.tab.bookwebapppractice.entity.Author;
+import edu.wctc.tab.bookwebapppractice.service.AbstractFacade;
 import java.io.IOException;
 import java.util.List;
-import javax.naming.Context;
-import javax.naming.InitialContext;
+import javax.inject.Inject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 
 /**
  * The main controller for author-related activities
@@ -26,8 +20,10 @@ import javax.sql.DataSource;
 @WebServlet(name = "AuthorController", urlPatterns = {"/AuthorController"})
 public class AuthorController extends HttpServlet {
 
-    // NO MAGIC NUMBERS!
+    @Inject
+    private AbstractFacade<Author> authService;
 
+    // NO MAGIC NUMBERS!
     private static final String NO_PARAM_ERR_MSG = "No request parameter identified";
     private static final String LIST_PAGE = "/listAuthors.jsp";
     private static final String LIST_ACTION = "list";
@@ -35,7 +31,6 @@ public class AuthorController extends HttpServlet {
     private static final String UPDATE_ACTION = "update";
     private static final String DELETE_ACTION = "delete";
     private static final String ACTION_PARAM = "action";
-
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -52,36 +47,15 @@ public class AuthorController extends HttpServlet {
         String destination = LIST_PAGE;
         String action = request.getParameter(ACTION_PARAM);
 
-        /*
-         For now we are hard-coding the strategy objects into this
-         controller. In the future we'll auto inject them from a config
-         file. Also, the DAO opens/closes a connection on each method call,
-         which is not very efficient. In the future we'll learn how to use
-         a connection pool to improve this.
-         */
-        DatabaseStrategy db = new MySqlDBStrategy();
-        AuthorDAOstrategy authDao
-                = new AuthorDAO(db, "com.mysql.jdbc.Driver",
-                        "jdbc:mysql://localhost:3306/literature", "root", "admin");
-        LiteratureService authService = new LiteratureService(authDao);
-
+//     
         try {
-            /*
-             Here's what the connection pool version looks like.
-             */
-//            Context ctx = new InitialContext();
-//            DataSource ds = (DataSource)ctx.lookup("jdbc/book");
-//            AuthorDaoStrategy authDao = new ConnPoolAuthorDao(ds, new MySqlDbStrategy());
-//            AuthorService authService = new AuthorService(authDao);
-
+            
             /*
              Determine what action to take based on a passed in QueryString
              Parameter
              */
             if (action.equals(LIST_ACTION)) {
-                List<Author> authors = null;
-                authors = authService.getAllRecords() ;
-                request.setAttribute("authors", authors);
+                findAllAuthors(request, authService);
                 destination = LIST_PAGE;
 
             } else if (action.equals("ADD_ACTION")) {
@@ -99,13 +73,16 @@ public class AuthorController extends HttpServlet {
         } catch (Exception e) {
             request.setAttribute("errMsg", e.getCause().getMessage());
         }
-
-        // Forward to destination page
+         //Forward to destination page
         RequestDispatcher dispatcher
                 = getServletContext().getRequestDispatcher(destination);
         dispatcher.forward(request, response);
     }
 
+    public void findAllAuthors(HttpServletRequest request, AbstractFacade<Author> authService){
+        List<Author> authors = authService.findAll();
+        request.setAttribute("authors", authors);
+    }
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
      * Handles the HTTP <code>GET</code> method.
