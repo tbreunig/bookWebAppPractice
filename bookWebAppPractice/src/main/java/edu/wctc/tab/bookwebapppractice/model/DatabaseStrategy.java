@@ -3,6 +3,7 @@ package edu.wctc.tab.bookwebapppractice.model;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import javax.sql.DataSource;
 
 /**
  *
@@ -11,6 +12,8 @@ import java.util.Map;
 public interface DatabaseStrategy {
 
     public abstract void openConnection(String driverClass, String url, String userName, String password) throws Exception;
+    
+    public abstract void openConnection(DataSource source) throws Exception; 
     
     public abstract void createNewRecord(String tableName, String columnName, Object columnValue) throws SQLException;
     
