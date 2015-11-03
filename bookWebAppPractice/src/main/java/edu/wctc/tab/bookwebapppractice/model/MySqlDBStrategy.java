@@ -8,9 +8,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.sql.DataSource;
 
 /**
  *
@@ -21,7 +24,7 @@ public class MySqlDBStrategy implements DatabaseStrategy {
     private Connection conn;
 
     @Override
-    public void openConnection(String driverClass, String url, String userName, String password) throws Exception {
+    public void openConnection(String driverClass, String url, String userName, String password) throws SQLException, Exception {
 
         Class.forName(driverClass);
         conn = DriverManager.getConnection(url, userName, password);
@@ -29,23 +32,74 @@ public class MySqlDBStrategy implements DatabaseStrategy {
     }
 
     @Override
-    public void createNewRecord(String tableName, String columnName, Object columnValue) throws SQLException {
-
-        String sql = null;
-        PreparedStatement stmt = null;
-
-        if (columnValue == null) {
-            sql = "INSERT INTO " + tableName + " (" + columnName + ", " + columnName + ") " + "VALUES" + " (?,?)";
-            stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, columnValue);
-            stmt.setObject(2, columnValue);
-           
-        }
-         stmt.executeQuery(sql);
+    public void openConnection(DataSource source) throws SQLException, Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public List<Map<String, Object>> findAllRecords(String tableName) throws SQLException {
+    public boolean createNewRecord(String tableName, List colHeaders, List colVals) throws SQLException, Exception {
+
+        PreparedStatement pstmt = null;
+        int manipulatedRecs = 0;
+
+        try {
+            pstmt = buildInsertStatement(conn, tableName, colHeaders);
+            final Iterator i = colVals.iterator();
+            int index = 1;
+            while (i.hasNext()) {
+                final Object obj = i.next();
+                pstmt.setObject(index++, obj);
+            }
+            manipulatedRecs = pstmt.executeUpdate();
+
+        } catch (SQLException sqle) {
+            throw sqle;
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            } catch (SQLException e) {
+                throw e;
+            }
+        }
+        if (manipulatedRecs == 1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public PreparedStatement buildInsertStatement(Connection conn, String tableName, List colNames) throws SQLException, Exception {
+
+        PreparedStatement pstmt = null;
+
+        //INSERT INTO Author (author_name) VALUES (?);
+        StringBuffer sb = new StringBuffer("INSERT INTO ");
+        sb.append(tableName).append(" (");
+        for (Object colName : colNames) {
+            sb.append(colName.toString()).append(", ");
+        }
+        int index = sb.lastIndexOf(",");
+        String s = sb.substring(0, index);
+        System.out.println(s);
+        s = s += ") VALUES (";
+        for (Object colName : colNames) {
+            s += "?, ";
+        }
+        index = s.lastIndexOf(",");
+        s = s.substring(0, index);
+        s += ")";
+
+        pstmt = conn.prepareStatement(s);
+        return pstmt;
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllRecords(String tableName) throws SQLException, Exception {
         String sql = "SELECT * FROM " + tableName;
 
         //You need to create a LIST for data to be stored in and worked with below
@@ -69,51 +123,70 @@ public class MySqlDBStrategy implements DatabaseStrategy {
     }
 
     @Override
-    public void updateSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue, String columnName, Object columnValue) throws SQLException {
-        String sql;
-        Statement stmt = null;
+    public void updateSingleRecord(String tableName, List cols, List vals, Object fieldToUpdate, Object dataToUpdate) throws SQLException, Exception {
 
-        if (primeKeyValue instanceof String) {
-            sql = "UPDATE " + tableName + " SET " + primeKeyName + " = '" + primeKeyValue + "'" + " WHERE " + columnName + " = '" + columnValue + "'";
-            stmt = conn.prepareStatement(sql);
-        } else {
-            sql = "UPDATE " + tableName + " SET " + primeKeyName + " = " + primeKeyValue + " WHERE " + columnName + " = " + columnValue;
-            stmt = conn.prepareStatement(sql);
-        }
-        stmt.executeUpdate(sql);
     }
 
     @Override
-    public void deleteSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue) throws SQLException {
-        String sql;
-        Statement stmt = null;
+    public PreparedStatement buildUpdateStatement(Connection conn, String tableName, List colNames, List colVals, Object fieldToUpdate, Object dataToUpdate) throws SQLException, Exception {
 
-        if (primeKeyValue instanceof String) {
-            sql = "DELETE FROM " + tableName + " WHERE " + primeKeyName + " = '" + primeKeyValue + "'";
-            stmt = conn.prepareStatement(sql);
-        } else {
-            sql = "DELETE FROM " + tableName + " WHERE " + primeKeyName + " = " + primeKeyValue;
-            stmt = conn.prepareStatement(sql);
+        PreparedStatement pstmt = null;
+
+        //UPDATE Author SET author_name = ? WHERE author_id = #;
+        StringBuffer sb = new StringBuffer("UPDATE ");
+        sb.append(tableName).append(" SET ");
+        for (Object colName : colNames) {
+            sb.append(colName.toString()).append(" = ").append("?, ");
         }
-        stmt.executeUpdate(sql);
+        int index = sb.lastIndexOf(",");
+        String s = sb.substring(0, index);
+        System.out.println(s);
+        s = s += " WHERE ";
+
+        for (Object colVal : colVals) {
+            sb.append(fieldToUpdate).append(" = ?");
+        }
+
+        System.out.println(s);
+        pstmt = conn.prepareStatement(s);
+        return pstmt;
     }
 
     @Override
-    public void closeConnection() throws SQLException {
+    public void deleteSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue) throws SQLException, Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void closeConnection() throws SQLException, Exception {
         conn.close();
     }
 
     public static void main(String[] args) throws Exception {
         MySqlDBStrategy db = new MySqlDBStrategy();
         db.openConnection("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/literature", "root", "admin");
-//        List<Map<String, Object>> records = db.findAllRecords("author");
+
+//        ------FIND ALL------
+//        List<Map<String, Object>> records = db.findAllRecords("Author");
 //        for (Map record : records) {
 //            System.out.println(record);
 //        }
+//      
+//        -----CREATE NEW RECORD-----
+//        List<String> colNames = Arrays.asList("author_name");
+//        List<Object> colVals = Arrays.asList("Bob Smith");
+//        db.createNewRecord("Author", colNames, colVals);
+//        System.out.println(db.findAllRecords("Author"));
+//        db.closeConnection();
+        
+//        -----UPDATE RECORD-----
+        List<String> colNames = Arrays.asList("author_name");
+        List<Object> colVals = Arrays.asList("Tyler Anthony Breunig");
+        db.updateSingleRecord("Author", colNames, colVals, "author_id", 1);
+        System.out.println(db.findAllRecords("Author"));
+        db.closeConnection();
 
-        db.createNewRecord("author",);
-
-        System.out.println();
+//        -----DELETE RECORD-----
     }
 
 }
