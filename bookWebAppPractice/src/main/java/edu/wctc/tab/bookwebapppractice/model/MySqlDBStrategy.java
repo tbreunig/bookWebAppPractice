@@ -223,20 +223,35 @@ public class MySqlDBStrategy implements DatabaseStrategy {
         PreparedStatement pstmt = null;
         int manipulatedRecs = 0;
 
-        // DELETE FROM tableName WHERE primeKeyName = primeKeyValue
-//        try {
-//            pstmt = 
-//        }
-
-        return 0;
+        try {
+            pstmt = buildDeleteStatement(tableName, whereField);
+            if (whereValue != null) {
+                pstmt.setObject(1, whereValue);
+            }
+            manipulatedRecs += pstmt.executeUpdate();
+            System.out.println("Records deleted:" + manipulatedRecs);
+        } catch (SQLException sqle) {
+            throw sqle;
+        } catch (Exception e) {
+            throw e;
+        }
+        return manipulatedRecs;
     }
 
     @Override
     public PreparedStatement buildDeleteStatement(String tableName, String whereField) throws SQLException, Exception {
-       PreparedStatement pstmt = null;
-       
-       
-       return pstmt;
+
+        // DELETE FROM tableName WHERE whereField = ?
+        StringBuffer sb = new StringBuffer("DELETE FROM ");
+        sb.append(tableName);
+
+        if (whereField != null) {
+            sb.append(" WHERE ").append(whereField).append(" = ?");
+        }
+
+        final String sql = sb.toString();
+
+        return conn.prepareStatement(sql);
     }
 
     @Override
@@ -254,9 +269,9 @@ public class MySqlDBStrategy implements DatabaseStrategy {
 //            System.out.println(record);
 //        }
 //        ------FIND BY ID------
-        Map<String, Object> record = db.findRecordById("Author", "author_id", 4);
-        System.out.println(record);
-    }
+//        Map<String, Object> record = db.findRecordById("Author", "author_id", 4);
+//        System.out.println(record);
+//    }
 //
 //            -----CREATE NEW RECORD-----
 //            List<String> colNames = Arrays.asList("author_name");
@@ -275,5 +290,14 @@ public class MySqlDBStrategy implements DatabaseStrategy {
 //            System.out.println(db.findAllRecords("Author"));
 //            db.closeConnection();
 //    
+//            ----- buildDeleteStatement test -----
+//        PreparedStatement pstmt = db.buildDeleteStatement("Author", "author_id");
+//        System.out.println(pstmt);
+        
 //            -----DELETE SINGLE RECORD-----
+            db.deleteSingleRecord("Author", "author_name", "Rudy Rookie");
+            
+            
+        
     }
+}
