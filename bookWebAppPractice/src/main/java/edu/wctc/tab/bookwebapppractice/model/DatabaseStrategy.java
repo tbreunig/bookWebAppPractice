@@ -21,18 +21,22 @@ public interface DatabaseStrategy {
     //--------CREATE-------//
     public abstract boolean createNewRecord(String tableName, List cols, List vals) throws SQLException, Exception;
 
-    public abstract PreparedStatement buildInsertStatement(Connection conn, String tableName, List colNames) throws SQLException, Exception;
+    public abstract PreparedStatement buildInsertStatement(String tableName, List colNames) throws SQLException, Exception;
 
     //--------RETRIEVE-------//
     public abstract List<Map<String, Object>> findAllRecords(String tableName) throws SQLException, Exception;
+    
+    public abstract Map<String, Object> findRecordById(String tableName, String primaryKeyField, Object keyValue) throws SQLException, Exception;
 
     //--------UPDATE-------//
-    public abstract void updateSingleRecord(String tableName, List cols, List vals, Object fieldToUpdate, Object dataToUpdate) throws SQLException, Exception;
+    public abstract boolean updateSingleRecord(String tableName, List cols, List vals, String whereField, Object whereValue) throws SQLException, Exception;
     
-    public abstract PreparedStatement buildUpdateStatement(Connection conn, String tableName, List colNames, List colVals, Object fieldToUpdate, Object dataToUpdate) throws SQLException, Exception;
+    public abstract PreparedStatement buildUpdateStatement(String tableName, List colNames, String whereField) throws SQLException, Exception;
 
     //--------DELETE-------//
-    public abstract void deleteSingleRecord(String tableName, Object primeKeyName, Object primeKeyValue) throws SQLException, Exception;
+    public abstract int deleteSingleRecord(String tableName, String whereField, Object whereValue) throws SQLException, Exception;
+    
+    public abstract PreparedStatement buildDeleteStatement(String tableName, String whereField) throws SQLException, Exception;
 
     //--------CLOSE CONNECTION-------//
     public abstract void closeConnection() throws SQLException, Exception;
