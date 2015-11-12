@@ -275,7 +275,7 @@ public class MySqlDBStrategy implements DatabaseStrategy {
 //
 //            -----CREATE NEW RECORD-----
 //            List<String> colNames = Arrays.asList("author_name");
-//            List<Object> colVals = Arrays.asList("Bob Smith");
+//            List<Object> colVals = Arrays.asList("Bo Jangles");
 //            db.createNewRecord("Author", colNames, colVals);
 //            System.out.println(db.findAllRecords("Author"));
 //            db.closeConnection();
@@ -295,9 +295,7 @@ public class MySqlDBStrategy implements DatabaseStrategy {
 //        System.out.println(pstmt);
         
 //            -----DELETE SINGLE RECORD-----
-            db.deleteSingleRecord("Author", "author_name", "Rudy Rookie");
-            
-            
-        
+//            db.deleteSingleRecord("Author", "author_name", "Rudy Rookie");
+ 
     }
 }
